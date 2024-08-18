@@ -89,6 +89,8 @@ ota:
     id: ota_esphome
   - platform: http_request
     id: ota_http_request
+  - platform: voice_kit
+    id: ota_voice_kit
 
 http_request:
 
@@ -1112,18 +1114,27 @@ media_player:
       - id: facotry_reset_cancelled_wave_file
         file: https://github.com/esphome/voice-kit/raw/dev/sounds/facotry_reset_cancelled.wav
 
+voice_kit:
+
 external_components:
   - source: github://jesserockz/esphome-components
     components: [file, udp_audio]
     refresh: 0s
-
   - source:
       type: git
       url: https://github.com/esphome/voice-kit
       ref: dev
-    components: [i2s_audio, microphone, nabu_microphone, nabu, voice_assistant, media_player, micro_wake_word]
+    components:
+      - audio_processor
+      - i2s_audio
+      - media_player
+      - micro_wake_word
+      - microphone
+      - nabu
+      - nabu_microphone
+      - voice_assistant
+      - voice_kit
     refresh: 0s
-
   - source: github://esphome/esphome@dev
     components: [update, http_request, watchdog]
     refresh: 0s
@@ -1272,13 +1283,11 @@ button:
   - platform: restart
     name: "Restart"
     entity_category: diagnostic
-
   # TODO: make it internal before launch
   - platform: factory_reset
     id: factory_reset_button
     name: "Factory Reset"
     entity_category: diagnostic
-
   # TODO: Remove before launch, added for testing/development
   - platform: template
     name: "timer beep"
@@ -1290,14 +1299,12 @@ button:
             .set_announcement(true)
             .set_local_media_file(id(timer_finished_wave_file))
             .perform();
-
   # TODO: Remove before launch, added for testing/development
   - platform: template
     name: Check for update
     entity_category: diagnostic
     on_press:
       - component.update: update_http_request
-
   # TODO: Remove before launch, added for testing/development
   - platform: template
     name: Perform Update
@@ -1306,6 +1313,15 @@ button:
       - update.perform:
           id: update_http_request
           force_update: true
+  # TODO: Remove before launch, added for testing/development
+  - platform: template
+    id: flash_xu316
+    name: "Flash XU316"
+    on_press:
+      then:
+        - ota.voice_kit.flash:
+            url: http://192.168.81.23:8123/local/esphome/ffva_i2s_v1.1.1_channel2_onlyaec.bin
+            md5_url: http://192.168.81.23:8123/local/esphome/ffva_i2s_v1.1.1_channel2_onlyaec.md5
 
 debug:
   update_interval: 5s
