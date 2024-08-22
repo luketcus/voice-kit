@@ -377,8 +377,8 @@ void resampleFree(Resample *cxt) {
 // }
 static float apply_filter(float *A, float *B, int num_taps) {
   float sum;
-  dsps_dotprod_f32_aes3(A, B, &sum, num_taps);
-  //   dsps_dotprod_f32_ansi(A, B, &sum, num_taps);
+  //dsps_dotprod_f32_aes3(A, B, &sum, num_taps);
+  dsps_dotprod_f32_ansi(A, B, &sum, num_taps);
   return sum;
 }
 #endif
