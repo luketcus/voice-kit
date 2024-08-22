@@ -238,7 +238,7 @@ AudioResamplerState AudioResampler::resample(bool stop_gracefully) {
             this->input_buffer_current_ = this->input_buffer_;
             this->input_buffer_length_ = 0;
           } else {
-            dsps_fird_s16_aes3(&this->fir_filter_, this->input_buffer_current_, this->output_buffer_,
+            dsps_fird_s16_ae32(&this->fir_filter_, this->input_buffer_current_, this->output_buffer_,
                                available_samples / 3);
 
             size_t output_samples = available_samples / 3;
@@ -261,8 +261,8 @@ AudioResamplerState AudioResampler::resample(bool stop_gracefully) {
           this->output_buffer_[i + available_samples / 2] = this->input_buffer_[2 * i + 1];
         }
         std::memcpy(this->input_buffer_, this->output_buffer_, available_samples * sizeof(int16_t));
-        dsps_fird_s16_aes3(&this->fir_filter_, this->input_buffer_, this->output_buffer_, (available_samples / 3) / 2);
-        dsps_fird_s16_aes3(&this->fir_filter_, this->input_buffer_ + available_samples / 2,
+        dsps_fird_s16_ae32(&this->fir_filter_, this->input_buffer_, this->output_buffer_, (available_samples / 3) / 2);
+        dsps_fird_s16_ae32(&this->fir_filter_, this->input_buffer_ + available_samples / 2,
                            this->output_buffer_ + (available_samples / 3) / 2, (available_samples / 3) / 2);
         std::memcpy(this->input_buffer_, this->output_buffer_, available_samples * sizeof(int16_t));
         for (int i = 0; i < available_samples / 2; ++i) {
