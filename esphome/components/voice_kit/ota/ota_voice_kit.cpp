@@ -9,6 +9,8 @@
 #include "esphome/components/ota/ota_backend.h"
 #include "esphome/components/watchdog/watchdog.h"
 
+#include <cinttypes>
+
 namespace esphome {
 namespace voice_kit {
 
@@ -343,21 +345,28 @@ bool OtaVoiceKitComponent::dfu_set_alternate_() {
 }
 
 bool OtaVoiceKitComponent::dfu_wait_for_idle_() {
-  auto now = millis();
-  do {
-    if (!this->dfu_get_status_()) {
-      return false;
-    }
-    ESP_LOGVV(TAG, "DFU state: %u, status: %u", this->dfu_state_, this->dfu_status_);
+  auto wait_for_idle_start_ms = millis();
+  auto status_last_read_ms = millis();
+  this->dfu_status_next_req_delay_ = 0;  // clear this, it'll be refreshed below
 
-    if ((this->dfu_state_ == DFU_INT_DFU_IDLE) || (this->dfu_state_ == DFU_INT_DFU_DNLOAD_IDLE) ||
-        (this->dfu_state_ == DFU_INT_DFU_MANIFEST_WAIT_RESET)) {
-      return true;
+  do {
+    if (millis() > status_last_read_ms + this->dfu_status_next_req_delay_) {
+      if (!this->dfu_get_status_()) {
+        return false;
+      }
+      status_last_read_ms = millis();
+      ESP_LOGVV(TAG, "DFU state: %u, status: %u, delay: %" PRIu32, this->dfu_state_, this->dfu_status_,
+                this->dfu_status_next_req_delay_);
+
+      if ((this->dfu_state_ == DFU_INT_DFU_IDLE) || (this->dfu_state_ == DFU_INT_DFU_DNLOAD_IDLE) ||
+          (this->dfu_state_ == DFU_INT_DFU_MANIFEST_WAIT_RESET)) {
+        return true;
+      }
     }
     // feed watchdog and give other tasks a chance to run
     App.feed_wdt();
     yield();
-  } while (now + DFU_TIMEOUT_MS > millis());
+  } while (wait_for_idle_start_ms + DFU_TIMEOUT_MS > millis());
 
   ESP_LOGE(TAG, "Timeout waiting for DFU idle state");
   return false;
